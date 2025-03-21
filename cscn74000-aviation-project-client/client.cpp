@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
 	uint8_t Tx[];
 	newPkt.SerializeData(*Tx);
 
+	while ()
 	sendto(ClientSocket, Tx, buffer_size, 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
 
 	closesocket(ClientSocket);
