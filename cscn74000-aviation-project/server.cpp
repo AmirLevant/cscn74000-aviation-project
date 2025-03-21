@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <string.h>
 #include <windows.networking.sockets.h>
 #include <iostream>
+#include "../cscn74000-aviation-project-client/packet.h"
+
 #pragma comment(lib, "Ws2_32.lib")
 
-using namespace std;
+
 
 void main()
 {
@@ -15,7 +15,7 @@ void main()
 
 	//create server socket
 	SOCKET ServerSocket;
-	ServerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	ServerSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (ServerSocket == INVALID_SOCKET) {
 		WSACleanup();
 		return;
@@ -33,33 +33,22 @@ void main()
 		return;
 	}
 
-	//listen on a socket
-	if (listen(ServerSocket, 1) == SOCKET_ERROR) {
-		closesocket(ServerSocket);
-		WSACleanup();
-		return;
+	std::cout << "Waiting for client packet" << std::endl;
+
+	while (1)
+	{
+		char RxBuffer[128] = {};	//	Buffer for receiving data
+		sockaddr_in CltAddr;		//	Client Address for sending resp
+		int length_recvfrom_parameter = sizeof(struct sockaddr_in);
+
+		recvfrom(ServerSocket, RxBuffer, sizeof(RxBuffer), 0, (SOCKADDR*)&CltAddr, &length_recvfrom_parameter);
+		Packet RxPkt(RxBuffer);
+
+
 	}
 
+	
 
-	cout << "Waiting for client connection\n" << endl;
-
-	//accepts a connection from a client
-	SOCKET ConnectionSocket;
-	ConnectionSocket = SOCKET_ERROR;
-	if ((ConnectionSocket = accept(ServerSocket, NULL, NULL)) == SOCKET_ERROR) {
-		closesocket(ServerSocket);
-		WSACleanup();
-		return;
-	}
-
-	cout << "Connection Established" << endl;
-
-	//receives RxBuffer
-	char RxBuffer[128] = {};
-	recv(ConnectionSocket, RxBuffer, sizeof(RxBuffer), 0);
-	cout << "Msg Rx: " << RxBuffer << endl;
-
-	closesocket(ConnectionSocket);	//closes incoming socket
 	closesocket(ServerSocket);	    //closes server socket	
 	WSACleanup();					//frees Winsock resources
 }
