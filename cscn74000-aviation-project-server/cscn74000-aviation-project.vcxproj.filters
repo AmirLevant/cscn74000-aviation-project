@@ -18,24 +18,21 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="packet.cpp">
+    <ClCompile Include="server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="client.cpp">
+    <ClCompile Include="..\cscn74000-aviation-project-client\packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h">
+    <ClInclude Include="..\cscn74000-aviation-project-client\packet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="packet.h">
+    <ClInclude Include="server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="client.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="helper_functions.h">
+    <ClInclude Include="..\cscn74000-aviation-project-client\helper_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
