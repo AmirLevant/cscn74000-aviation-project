@@ -2,9 +2,6 @@
 #include <fstream>
 #include <ctime>
 #include <string>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <iomanip>
 
 #define LOG_FILE_MAX_SIZE 1048576  // 1MB double check if this is correct sizing
@@ -49,7 +46,7 @@ static void writelog(string message, string log_file_name)
 {
 	ofstream log_file(log_file_name, ios::app);
 
-	checkLogRollover(logFile, logFileName);
+	//checkLogRollover(logFile, logFileName);
 	log_file << getCurrentTimestamp() << " " << message << endl;
 	log_file.close();
 
