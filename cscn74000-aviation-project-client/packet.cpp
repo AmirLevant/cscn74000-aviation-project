@@ -56,6 +56,41 @@ Packet::Packet(uint32_t sendId, uint32_t destId, uint8_t reqType, uint32_t trans
 	checksum = calcChecksum();
 }
 
+void Packet::Serialize(uint8_t* buffer)
+{
+	int offset = 0;
+
+	memcpy(buffer + offset, &timestamp, sizeof(timestamp));
+	offset += timestamp;
+
+	memcpy(buffer + offset, &senderId, sizeof(senderId));
+	offset += sizeof(senderId);
+
+	memcpy(buffer + offset, &destinationId, sizeof(destinationId));
+	offset += sizeof(destinationId);
+
+	memcpy(buffer + offset, &interactionType, sizeof(interactionType));
+	offset += sizeof(interactionType);
+	
+	memcpy(buffer + offset, &requestType, sizeof(requestType));
+	offset += sizeof(requestType);
+
+	memcpy(buffer + offset, &transactionNum, sizeof(transactionNum));
+	offset += sizeof(transactionNum);
+
+	memcpy(buffer + offset, &bodyLength, sizeof(bodyLength));
+	offset += sizeof(bodyLength);
+
+	memcpy(buffer + offset, &checksum, sizeof(checksum));
+	offset += sizeof(checksum);
+
+	if (bodyLength > 0)
+	{
+		memcpy(buffer + offset, body, bodyLength);
+		offset += bodyLength;
+	}
+}
+
 Packet::Packet(uint8_t* buffer)
 {
 	int offset = 0;
