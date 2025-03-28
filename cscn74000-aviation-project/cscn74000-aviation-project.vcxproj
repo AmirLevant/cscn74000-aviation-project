@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\cscn74000-aviation-project-client\packet.cpp" />
+    <ClCompile Include="ground_station.cpp" />
     <ClCompile Include="ground_station.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="server.cpp" />
