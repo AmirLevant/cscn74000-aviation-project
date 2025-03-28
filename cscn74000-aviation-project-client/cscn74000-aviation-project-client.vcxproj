@@ -127,7 +127,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="packet.cpp" />
     <ClCompile Include="client.cpp" />
   </ItemGroup>
