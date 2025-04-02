@@ -19,7 +19,8 @@ enum Country : uint8_t
 	Cabo_Verde, Cambodia, Cameroon, Canada, Central_African_Republic, Chad, Chile, China, Colombia, Comoros, Costa_Rica, Croatia, Cuba, Cyprus, Czechia, 
 	Democratic_Republic_of_the_Congo, Denmark, Djibouti, Dominica, Dominican_Republic, 
 	Ecuador, Egypt, El_Salvador, Equatorial_Guinea, Eritrea, Estonia, Eswatini, Ethiopia, 
-	Fiji, Finland, France, Gabon, Gambia, Georgia, Germany, Ghana, Greece, Grenada, Guatemala, Guinea, Guinea_Bissau, Guyana, 
+	Fiji, Finland, France, 
+	Gabon, Gambia, Georgia, Germany, Ghana, Greece, Grenada, Guatemala, Guinea, Guinea_Bissau, Guyana, 
 	Haiti, Honduras, Hungary, 
 	Iceland, India, Indonesia, Iran, Iraq, Ireland, Israel, Italy, Ivory_Coast, 
 	Jamaica, Japan, Jordan, 
@@ -33,12 +34,12 @@ enum Country : uint8_t
 	Republic_of_the_Congo, Romania, Russia, Rwanda, 
 	Saint_Kitts_and_Nevis, Saint_Lucia, Saint_Vincent_and_the_Grenadines, Samoa, San_Marino, Sao_Tome_and_Principe, Saudi_Arabia, Senegal, Serbia, Seychelles, Sierra_Leone, Singapore, Slovakia, Slovenia, Solomon_Islands, Somalia, South_Africa, South_Korea, South_Sudan, Spain, Sri_Lanka, Sudan, Suriname, Sweden, Switzerland, Syria, 
 	Taiwan, Tajikistan, Tanzania, Thailand, Timor_Leste, Togo, Tonga, Trinidad_and_Tobago, Tunisia, Turkey, Turkmenistan, Tuvalu, 
-	Uganda, Ukraine, United_Arab_Emirates, United_Kingdom, United_States, Uruguay, Uzbekistan, 
+	Uganda, Ukraine, United_Arab_Emirates, United_Kingdom, United_States_of_America, Uruguay, Uzbekistan, 
 	Vanuatu, Vatican_City, Venezuela, Vietnam, 
 	Yemen, 
 	Zambia, Zimbabwe,
 	Country_Total_Amount
 };
-enum Model : uint8_t { Boeing_747, Boeing_787_Dreamliner, Boeing_737_MAX, Airbust_A380, Airbus_A320neo, Airbus_A350, Embraer_E190, Embraer_E175, Bombardier_CRJ900, Bombardier_Global_7500,
+enum Model : uint8_t { Boeing_747, Boeing_787_Dreamliner, Boeing_737_MAX, Airbus_A380, Airbus_A320neo, Airbus_A350, Embraer_E190, Embraer_E175, Bombardier_CRJ900, Bombardier_Global_7500,
 Cessna_Citation_X, Gulfstream_G650, McDonnell_Douglas_MD_11, Concorde, Lockheed_Martin_C_130_Hercules, Model_Total_Amount};
 
