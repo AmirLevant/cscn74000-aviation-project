@@ -1,76 +1,96 @@
-﻿﻿#include "Plane.h" // Include your header file
-#include <cmath> 
-#include <algorithm> // For std::remove
+﻿#include "plane.h"
+#include "helper_functions.h"
+
+#define STARTING_DISTANCE 350
+
+Plane::Plane()
+{
+    plane_carrier = static_cast<Carrier>(rand() % Carrier::Carrier_Total_Amount);
+    country = static_cast<Country>(rand() % Country::Country_Total_Amount);
+    model = static_cast<Model>(rand() % Model::Model_Total_Amount);
+
+    distance_groundctrl = STARTING_DISTANCE;
+
+}
 
 // Constructor implementation
-Plane::Plane(double x, double y, std::string carrier, std::string country, std::string model) {
-    x_coordinate = x;
-    y_coordinate = y;
+Plane::Plane(Carrier carrier, Country country, Model model) {
     plane_carrier = carrier;
     this->country = country;
     this->model = model;
-    distance_groundctrl = std::sqrt(x * x + y * y);
-
-
+    distance_groundctrl = STARTING_DISTANCE;
 
     // Create the flag lookup string
-    country_flag = country + "_flag";
+    //country_flag = country + "_flag";
+}
+
+Plane::Plane(uint8_t* buffer)
+{
+    int offset = 0;
+    
+    plane_carrier = static_cast<Carrier>(buffer[offset]);
+    offset++;
+
+    country = static_cast<Country>(buffer[offset]);
+    offset++;
+
+    model = static_cast<Model>(buffer[offset]);
+    offset++;
+
+    memcpy(&distance_groundctrl, buffer + offset, sizeof(distance_groundctrl));
+    offset += sizeof(distance_groundctrl);
+
 
 }
 
 // Getter implementations
-double Plane::getXCoordinate() const {
-    return x_coordinate;
-}
 
-double Plane::getYCoordinate() const {
-    return y_coordinate;
-}
-
-double Plane::getDistanceFromGround() const {
+int Plane::getDistanceFromGround()  {
     return distance_groundctrl;
 }
 
-std::string Plane::getCarrier() const {
+Carrier Plane::getCarrier()  {
     return plane_carrier;
 }
 
-std::string Plane::getCountry() const {
+Country Plane::getCountry()  {
     return country;
 }
 
-std::string Plane::getModel() const {
+Model Plane::getModel()  {
     return model;
 }
 
-std::string Plane::getCountryFlag() const {
-    return country_flag;
-}
+//std::string Plane::getCountryFlag()  {
+//    return country_flag;
+//}
 
 // Setter implementations
-void Plane::setCoordinates(double x, double y) {
-    x_coordinate = x;
-    y_coordinate = y;
-    // Update distance after changing coordinates
-    updateDistanceFromGroundControl();
-}
 
-void Plane::setCarrier(const std::string& carrier) {
+void Plane::setCarrier(Carrier carrier) {
     plane_carrier = carrier;
 }
 
-void Plane::updateDistanceFromGroundControl() {
-    // Calculate Euclidean distance from origin
-    distance_groundctrl = std::sqrt(x_coordinate * x_coordinate + y_coordinate * y_coordinate);
+void Plane::setDistanceFromGroundControl(int distance)
+{
+    distance_groundctrl = distance;
 }
 
+void Plane::decreaseDistance(int decrement)
+{
+    distance_groundctrl = distance_groundctrl - decrement;
+    if (distance_groundctrl < 0)
+    {
+        distance_groundctrl = 0;
+    }
+}
 
-void Plane::displayInfo() const {
+void Plane::displayInfo() {
     std::cout << "Plane Information:" << std::endl;
     std::cout << "-------------------" << std::endl;
     std::cout << "Model: " << model << std::endl;
     std::cout << "Carrier: " << plane_carrier << std::endl;
-    std::cout << "Country: " << country << " " << country_flag << std::endl;
-    std::cout << "Current Position: (" << x_coordinate << ", " << y_coordinate << ")" << std::endl;
+    //std::cout << "Country: " << country << " " << country_flag << std::endl;
     std::cout << "Distance from Ground Control: " << distance_groundctrl << " units" << std::endl;
 }
+

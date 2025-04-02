@@ -19,7 +19,8 @@ using namespace std;
 string getCurrentTimestamp() 
 {
 	time_t now = time(0);
-	tm *ltm = localtime(&now);
+	tm* ltm = nullptr;
+	localtime_s(ltm, &now);
 	char timestamp[80];
 	strftime(timestamp, 80, LOG_TIMESTAMP_FORMAT, ltm);
 	

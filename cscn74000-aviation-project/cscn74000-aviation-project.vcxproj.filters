@@ -24,7 +24,7 @@
     <ClCompile Include="logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ground_station.cpp">
+    <ClCompile Include="..\cscn74000-aviation-project-server\ground_station.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +35,7 @@
     <ClInclude Include="server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ground_station.h">
+    <ClInclude Include="..\cscn74000-aviation-project-server\ground_station.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

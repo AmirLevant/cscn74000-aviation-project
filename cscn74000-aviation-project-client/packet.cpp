@@ -61,7 +61,7 @@ void Packet::Serialize(uint8_t* buffer)
 	int offset = 0;
 
 	memcpy(buffer + offset, &timestamp, sizeof(timestamp));
-	offset += timestamp;
+	offset += sizeof(timestamp);
 
 	memcpy(buffer + offset, &senderId, sizeof(senderId));
 	offset += sizeof(senderId);
@@ -130,7 +130,7 @@ Packet::Packet(uint8_t* buffer)
 	offset += bodyLength;
 }
 
-Packet Packet::createAckPacket(Packet recPkt, uint32_t transNum)
+void Packet::convertToAckPacket(Packet recPkt, uint32_t transNum)
 {
 	timestamp = get_timestamp();
 
@@ -148,7 +148,7 @@ Packet Packet::createAckPacket(Packet recPkt, uint32_t transNum)
 
 	body = nullptr;
 
-	checksum = calcChecksum();
+	checksum = calcChecksum(); 
 }
 
 uint16_t Packet::calcChecksum()
@@ -200,4 +200,12 @@ Packet::~Packet()
 	{
 		delete[] body;
 	}
+}
+
+uint32_t Packet::get_timestamp()
+{
+	const auto p1 = std::chrono::system_clock::now();
+
+	return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::seconds>(
+		p1.time_since_epoch()).count());
 }

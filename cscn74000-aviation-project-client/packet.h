@@ -18,7 +18,8 @@ public:
 	Packet(uint32_t sendId, uint32_t destId, uint8_t reqType, uint32_t transNum, uint16_t bodyLen, uint8_t* data);
 	Packet(uint8_t* buffer);
 	void Serialize(uint8_t* buffer);
-	Packet createAckPacket(Packet recPkt, uint32_t transNum);
+	void convertToAckPacket(Packet recPkt, uint32_t transNum);
 	uint16_t calcChecksum();
 	~Packet();
+	uint32_t get_timestamp();
 };

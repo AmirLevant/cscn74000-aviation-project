@@ -129,13 +129,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\cscn74000-aviation-project-client\packet.cpp" />
-    <ClCompile Include="ground_station.cpp" />
+    <ClCompile Include="..\cscn74000-aviation-project-server\ground_station.cpp" />
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cscn74000-aviation-project-client\packet.h" />
-    <ClInclude Include="ground_station.h" />
+    <ClInclude Include="..\cscn74000-aviation-project-server\ground_station.h" />
     <ClInclude Include="server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

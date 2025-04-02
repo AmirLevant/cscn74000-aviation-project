@@ -4,7 +4,6 @@
 
 // The Ground Station class
 class Ground_Station {
-private:             // Access specifier
     std::string weather;    // current weather at the ground station
 
 public:
