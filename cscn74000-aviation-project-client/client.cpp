@@ -6,6 +6,28 @@
 int main(int argc, char* argv[])
 {
 	srand(time(0));
+
+	// Check if exactly one command line argument is provided
+	if (argc != 2) {
+		std::cout << "Error: Program requires exactly one argument - a positive number for plane ID" << std::endl;
+		return 1;
+	}
+
+	// Parsing and validating the plane ID
+	uint32_t planeId;
+	try {
+		planeId = std::stoi(argv[1]);
+		if (planeId <= 0) {
+			std::cout << "Error: Plane ID must be a positive number" << std::endl;
+			return 1;
+		}
+	}
+	catch (const std::exception&) {
+		std::cout << "Error: Invalid input. Plane ID must be a positive number" << std::endl;
+		return 1;
+	}
+
+
 	//starts Winsock DLLs
 	WSADATA wsaData;
 	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
@@ -29,7 +51,8 @@ int main(int argc, char* argv[])
 	std::string InputStr = "";
 	Packet newPkt(1, 0, 1, 0, nullptr);
 
-	Plane plane();
+	// Plane object created with the id from the command line
+	Plane plane(planeId);
 
 	uint8_t* TxBuffer = new uint8_t[128];
 	newPkt.Serialize(TxBuffer);
