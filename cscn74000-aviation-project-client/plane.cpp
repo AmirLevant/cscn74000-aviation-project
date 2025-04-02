@@ -16,7 +16,7 @@ Plane::Plane(uint32_t id)
     findCountryName();
     findModelName();
 
-    country_flag_path = plane_carrier_name + "flag.png";
+    country_flag_path = "../../" + plane_carrier_name + "flag.png";
 }
 
 // Constructor implementation
@@ -31,7 +31,7 @@ Plane::Plane(uint32_t id, Carrier carrier, Country country, Model model) {
     findCountryName();
     findModelName();
 
-    country_flag_path = plane_carrier_name + "flag.png";
+    country_flag_path = "../../" + plane_carrier_name + "flag.png";
 }
 
 Plane::Plane(uint8_t* buffer)
@@ -51,6 +51,7 @@ Plane::Plane(uint8_t* buffer)
     offset += sizeof(distance_groundctrl);
 
     country = Country_Total_Amount;
+    country_flag_path = "Unknown";
 
     findCarrierName();
     findModelName();
