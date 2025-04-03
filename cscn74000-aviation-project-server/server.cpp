@@ -1,5 +1,6 @@
 #include "../cscn74000-aviation-project-client/packet.h"
 #include "../cscn74000-aviation-project-client/helper_functions.h"
+#include "ground_station.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -7,6 +8,14 @@
 
 void main()
 {
+
+	// Initialize the ground station with random weather
+	Ground_Station groundStation;
+
+	// Display the ground station information (including weather)
+	std::cout << "Server starting with initial conditions:" << std::endl;
+	groundStation.displayInfo();
+	std::cout << std::endl;
 
 	//starts Winsock DLLs		
 	WSADATA wsaData;
