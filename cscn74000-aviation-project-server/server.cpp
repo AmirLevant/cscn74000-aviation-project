@@ -5,9 +5,12 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 
-
 void main()
 {
+
+	// Seed the random number generator
+	std::srand(std::time(0));
+
 
 	// Initialize the ground station with random weather
 	Ground_Station groundStation;

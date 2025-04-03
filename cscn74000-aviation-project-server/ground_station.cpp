@@ -28,12 +28,6 @@ Ground_Station::Ground_Station(std::string weather) {
 
 // Random weather generator implementation
 std::string Ground_Station::generateRandomWeather() {
-    // Seed the random number generator
-    static bool seeded = false;
-    if (!seeded) {
-        std::srand(static_cast<unsigned int>(std::time(nullptr)));
-        seeded = true;
-    }
 
     // Get a random index within the weatherTypes vector
     int index = std::rand() % weatherTypes.size();
