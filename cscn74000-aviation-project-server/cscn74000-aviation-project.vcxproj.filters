@@ -27,6 +27,9 @@
     <ClCompile Include="ground_station.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="helper_functions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cscn74000-aviation-project-client\packet.h">

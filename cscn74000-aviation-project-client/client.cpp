@@ -12,7 +12,6 @@ int main(int argc, char* argv[])
 		std::cout << "Error: Program requires exactly one argument - a positive number for plane ID" << std::endl;
 		return 1;
 	}
-
 	// Parsing and validating the plane ID
 	uint32_t planeId;
 	try {
@@ -26,7 +25,7 @@ int main(int argc, char* argv[])
 		std::cout << "Error: Invalid input. Plane ID must be a positive number" << std::endl;
 		return 1;
 	}
-
+	std::cout << "C++ version: " << __cplusplus << std::endl;
 
 	//starts Winsock DLLs
 	WSADATA wsaData;

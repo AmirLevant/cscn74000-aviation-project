@@ -1,4 +1,5 @@
 #include "../cscn74000-aviation-project-client/packet.h"
+#include "../cscn74000-aviation-project-client/helper_functions.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -6,6 +7,7 @@
 
 void main()
 {
+
 	//starts Winsock DLLs		
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
