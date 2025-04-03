@@ -1,8 +1,6 @@
 ﻿#include "plane.h"
 #include "helper_functions.h"
 
-#define STARTING_DISTANCE 350
-
 Plane::Plane(uint32_t id)
 {
     this->id = id;
@@ -16,7 +14,9 @@ Plane::Plane(uint32_t id)
     findCountryName();
     findModelName();
 
-    country_flag_path = "../../" + plane_carrier_name + "flag.png";
+    country_flag_path = "../flags/" + plane_carrier_name + "flag.png";
+
+    num_transactions = 0;
 }
 
 // Constructor implementation
@@ -31,7 +31,9 @@ Plane::Plane(uint32_t id, Carrier carrier, Country country, Model model) {
     findCountryName();
     findModelName();
 
-    country_flag_path = "../../" + plane_carrier_name + "flag.png";
+    country_flag_path = "../flags/" + plane_carrier_name + "flag.png";
+
+    num_transactions = 0;
 }
 
 Plane::Plane(uint8_t* buffer)
@@ -50,17 +52,22 @@ Plane::Plane(uint8_t* buffer)
     memcpy(&distance_groundctrl, buffer + offset, sizeof(distance_groundctrl));
     offset += sizeof(distance_groundctrl);
 
-    country = Country_Total_Amount;
-    country_flag_path = "Unknown";
+    country = Country_Unknown;
 
     findCarrierName();
+    findCountryName();
     findModelName();
 }
 
 // Getter implementations
 
-int Plane::getDistanceFromGround()  {
+uint32_t Plane::getDistanceFromGround()  {
     return distance_groundctrl;
+}
+
+uint32_t Plane::getId()
+{
+    return id;
 }
 
 Carrier Plane::getCarrier()  {
@@ -75,18 +82,33 @@ Model Plane::getModel()  {
     return model;
 }
 
+uint32_t Plane::getAndIncreaseTransactionNum()
+{
+    return ++num_transactions;
+}
+
+uint32_t Plane::getCurrentTransactionNum()
+{
+    return num_transactions;
+}
+
+std::string Plane::getFlagPath()
+{
+    return country_flag_path;
+}
+
 // Setter implementations
 
 void Plane::setCarrier(Carrier carrier) {
     plane_carrier = carrier;
 }
 
-void Plane::setDistanceFromGroundControl(int distance)
+void Plane::setDistanceFromGroundControl(uint32_t distance)
 {
     distance_groundctrl = distance;
 }
 
-void Plane::decreaseDistance(int decrement)
+void Plane::decreaseDistance(uint32_t decrement)
 {
     distance_groundctrl = distance_groundctrl - decrement;
     if (distance_groundctrl < 0)
@@ -103,6 +125,23 @@ void Plane::displayInfo() {
     std::cout << "Model: " << model << std::endl;
     //std::cout << "Country: " << country << " " << country_flag << std::endl;
     std::cout << "Distance from Ground Control: " << distance_groundctrl << " units" << std::endl;
+}
+
+void Plane::serialize(uint8_t* buffer)
+{
+    int offset = 0;
+
+    memcpy(buffer + offset, &id, sizeof(id));
+    offset += sizeof(id);
+
+    buffer[offset] = static_cast<uint8_t>(plane_carrier);
+    offset++;
+
+    buffer[offset] = static_cast<uint8_t>(model);
+    offset++;
+
+    memcpy(buffer + offset, &distance_groundctrl, sizeof(distance_groundctrl));
+    offset += sizeof(distance_groundctrl);
 }
 
 void Plane::findCarrierName()

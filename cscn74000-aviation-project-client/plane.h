@@ -1,12 +1,17 @@
 #pragma once
 #include "helper_functions.h"
 
-class Plane {
+#define STARTING_DISTANCE 350
+#define PLANE_SERIALIZATION_SIZE 10
+
+class Plane 
+{
     uint32_t id;
-    int distance_groundctrl;  // the current distance of the plane from the ground control
+    uint32_t distance_groundctrl;  // the current distance of the plane from the ground control
     Carrier plane_carrier;   // the carrier of the plane
     Country country;         // the plane's country of origin
     Model model;
+    uint32_t num_transactions;
     std::string country_flag_path;
 
     std::string plane_carrier_name;
@@ -20,10 +25,15 @@ public:
     Plane(uint8_t* buffer);
 
     // Getters
-    int getDistanceFromGround();
+    uint32_t getDistanceFromGround();
+    uint32_t getId();
     Carrier getCarrier();
     Country getCountry();
     Model getModel();
+    uint32_t getAndIncreaseTransactionNum();
+    uint32_t getCurrentTransactionNum();
+    std::string getFlagPath();
+
 
     void findCarrierName();
     void findCountryName();
@@ -31,10 +41,12 @@ public:
 
     // Setters
     void setCarrier(Carrier carrier);
-    void setDistanceFromGroundControl(int distance);
+    void setDistanceFromGroundControl(uint32_t distance);
 
-    void decreaseDistance(int decrement);
+    void decreaseDistance(uint32_t decrement);
 
     // Display functionality
     void displayInfo();
+
+    void serialize(uint8_t* buffer);
 };

@@ -10,7 +10,7 @@ Packet::Packet(uint32_t sendId, uint32_t destId, uint32_t transNum, uint16_t bod
 
 	interactionType = InteractionType::Telemetry;
 
-	requestType = 0;
+	requestType = RequestType::Non_Request;
 
 	transactionNum = transNum;
 
@@ -18,7 +18,7 @@ Packet::Packet(uint32_t sendId, uint32_t destId, uint32_t transNum, uint16_t bod
 
 	if (bodyLength > 0)
 	{
-		body = new uint8_t[bodyLen];
+		body = new uint8_t[bodyLength];
 		memcpy(body, data, bodyLength);
 		delete[] data;
 	}
@@ -28,7 +28,7 @@ Packet::Packet(uint32_t sendId, uint32_t destId, uint32_t transNum, uint16_t bod
 	checksum = calcChecksum();
 }
 
-Packet::Packet(uint32_t sendId, uint32_t destId, uint8_t reqType, uint32_t transNum, uint16_t bodyLen, uint8_t* data)
+Packet::Packet(uint32_t sendId, uint32_t destId, RequestType reqType, uint32_t transNum, uint16_t bodyLen, uint8_t* data)
 {
 	timestamp = get_timestamp();
 
@@ -46,7 +46,7 @@ Packet::Packet(uint32_t sendId, uint32_t destId, uint8_t reqType, uint32_t trans
 
 	if (bodyLength > 0)
 	{
-		body = new uint8_t[bodyLen];
+		body = new uint8_t[bodyLength];
 		memcpy(body, data, bodyLength);
 		delete[] data;
 	}
@@ -54,41 +54,6 @@ Packet::Packet(uint32_t sendId, uint32_t destId, uint8_t reqType, uint32_t trans
 		body = nullptr;
 
 	checksum = calcChecksum();
-}
-
-void Packet::Serialize(uint8_t* buffer)
-{
-	int offset = 0;
-
-	memcpy(buffer + offset, &timestamp, sizeof(timestamp));
-	offset += sizeof(timestamp);
-
-	memcpy(buffer + offset, &senderId, sizeof(senderId));
-	offset += sizeof(senderId);
-
-	memcpy(buffer + offset, &destinationId, sizeof(destinationId));
-	offset += sizeof(destinationId);
-
-	memcpy(buffer + offset, &interactionType, sizeof(interactionType));
-	offset += sizeof(interactionType);
-	
-	memcpy(buffer + offset, &requestType, sizeof(requestType));
-	offset += sizeof(requestType);
-
-	memcpy(buffer + offset, &transactionNum, sizeof(transactionNum));
-	offset += sizeof(transactionNum);
-
-	memcpy(buffer + offset, &bodyLength, sizeof(bodyLength));
-	offset += sizeof(bodyLength);
-
-	memcpy(buffer + offset, &checksum, sizeof(checksum));
-	offset += sizeof(checksum);
-
-	if (bodyLength > 0)
-	{
-		memcpy(buffer + offset, body, bodyLength);
-		offset += bodyLength;
-	}
 }
 
 Packet::Packet(uint8_t* buffer)
@@ -130,19 +95,83 @@ Packet::Packet(uint8_t* buffer)
 	offset += bodyLength;
 }
 
-void Packet::convertToAckPacket(Packet recPkt, uint32_t transNum)
+// Create a packet which sends the plane's basic telemetry information. Not to be used for sending the flag.
+Packet::Packet(Plane plane)
 {
 	timestamp = get_timestamp();
 
-	senderId = recPkt.destinationId;
+	senderId = plane.getId();
 
-	destinationId = recPkt.senderId;
+	destinationId = 0;
+
+	interactionType = InteractionType::Telemetry;
+
+	requestType = RequestType::Non_Request;
+
+	transactionNum = plane.getAndIncreaseTransactionNum();
+
+	bodyLength = PLANE_SERIALIZATION_SIZE;
+
+	if (bodyLength > 0)
+	{
+		body = new uint8_t[bodyLength];
+		// Serializes the necessary plane telemetry into the body of the packet message
+		plane.serialize(body);
+	}
+	else
+		body = nullptr;
+
+	checksum = calcChecksum();
+}
+
+void Packet::Serialize(uint8_t* buffer)
+{
+	int offset = 0;
+
+	memcpy(buffer + offset, &timestamp, sizeof(timestamp));
+	offset += sizeof(timestamp);
+
+	memcpy(buffer + offset, &senderId, sizeof(senderId));
+	offset += sizeof(senderId);
+
+	memcpy(buffer + offset, &destinationId, sizeof(destinationId));
+	offset += sizeof(destinationId);
+
+	memcpy(buffer + offset, &interactionType, sizeof(interactionType));
+	offset += sizeof(interactionType);
+
+	memcpy(buffer + offset, &requestType, sizeof(requestType));
+	offset += sizeof(requestType);
+
+	memcpy(buffer + offset, &transactionNum, sizeof(transactionNum));
+	offset += sizeof(transactionNum);
+
+	memcpy(buffer + offset, &bodyLength, sizeof(bodyLength));
+	offset += sizeof(bodyLength);
+
+	memcpy(buffer + offset, &checksum, sizeof(checksum));
+	offset += sizeof(checksum);
+
+	if (bodyLength > 0)
+	{
+		memcpy(buffer + offset, body, bodyLength);
+		offset += bodyLength;
+	}
+}
+
+void Packet::convertToAckPacket()
+{
+	timestamp = get_timestamp();
+
+	uint32_t holder = senderId;
+
+	senderId = destinationId;
+
+	destinationId = holder;
 
 	interactionType = InteractionType::Response;
 
-	requestType = 0;
-
-	transactionNum = transNum;
+	requestType = RequestType::Non_Request;
 
 	bodyLength = 0;
 
@@ -208,4 +237,34 @@ uint32_t Packet::get_timestamp()
 
 	return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::seconds>(
 		p1.time_since_epoch()).count());
+}
+
+uint32_t Packet::get_packetSize()
+{
+	return PACKET_HEADER_SIZE + bodyLength;
+}
+
+InteractionType Packet::getInteractionType()
+{
+	return interactionType;
+}
+
+RequestType Packet::getRequestType()
+{
+	return requestType;
+}
+
+uint32_t Packet::getSenderId()
+{
+	return senderId;
+}
+
+uint32_t Packet::getTransactionNum()
+{
+	return transactionNum;
+}
+
+uint8_t* Packet::getBody()
+{
+	return body;
 }

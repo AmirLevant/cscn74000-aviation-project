@@ -131,14 +131,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\cscn74000-aviation-project-client\packet.cpp" />
+    <ClCompile Include="..\cscn74000-aviation-project-client\plane.cpp" />
     <ClCompile Include="ground_station.cpp" />
     <ClCompile Include="helper_functions.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cscn74000-aviation-project-client\helper_functions.h" />
     <ClInclude Include="..\cscn74000-aviation-project-client\packet.h" />
+    <ClInclude Include="..\cscn74000-aviation-project-client\plane.h" />
     <ClInclude Include="ground_station.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -30,6 +27,9 @@
     <ClCompile Include="helper_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\cscn74000-aviation-project-client\plane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cscn74000-aviation-project-client\packet.h">
@@ -39,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ground_station.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cscn74000-aviation-project-client\plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
