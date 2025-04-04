@@ -89,9 +89,10 @@ int main(int argc, char* argv[])
 			sendFlag(plane);
 			sentFlag = true;
 		}
-		Packet* infoPkt = new Packet(plane);
+		Packet* infoPkt = new Packet(&plane);
 
-		TxBuffer = new uint8_t[firstPkt->get_packetSize()];
+		TxBuffer = new uint8_t[infoPkt->get_packetSize()];
+		infoPkt->Serialize(TxBuffer);
 
 		sendto(ClientSocket, (const char*)(TxBuffer), infoPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
 		delete[] TxBuffer;
@@ -99,7 +100,7 @@ int main(int argc, char* argv[])
 
 		timeWaited = waitForResponse(plane.getCurrentTransactionNum());
 
-		int timeToSleep = 1000 - timeWaited;
+		timeToSleep = 1000 - timeWaited;
 		if (timeToSleep > 0)
 			Sleep(1000 - timeWaited);
 	}
@@ -148,12 +149,15 @@ int waitForResponse(uint32_t transNum)
 
 	if (RxPkt->getInteractionType() == InteractionType::Response && (RxPkt->getTransactionNum() != transNum))
 	{
-		std::cout << "Transaction number of acknowledgement packet does not match current local transaction number. Plane will disconnect from server and divert its course outside of ground station radius.";
+		std::cout << "Transaction number of acknowledgement packet does not match current local transaction number. Plane will disconnect from server and divert its course outside of ground station radius." << std::endl;
 	}
 	else if (RxPkt->getInteractionType() == InteractionType::Response && (RxPkt->getTransactionNum() == transNum))
 	{
-		std::cout << "Acknowledgement for packet number " << transNum << " received.";
+		std::cout << "Acknowledgement for packet number " << transNum << " received." << std::endl;
 	}
+
+	delete[] RxBuffer;
+	delete RxPkt;
 
 	return static_cast<int>(duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginningTime).count());
 }

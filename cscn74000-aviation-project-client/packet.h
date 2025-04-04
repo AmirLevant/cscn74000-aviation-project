@@ -24,7 +24,7 @@ public:
 	Packet(uint32_t sendId, uint32_t destId, uint32_t transNum, uint16_t length, uint8_t* data);
 	Packet(uint32_t sendId, uint32_t destId, RequestType reqType, uint32_t transNum, uint16_t bodyLen, uint8_t* data);
 	Packet(uint8_t* buffer);
-	Packet(Plane plane);
+	Packet(Plane* plane);
 	void Serialize(uint8_t* buffer);
 	void convertToAckPacket();
 	uint16_t calcChecksum();

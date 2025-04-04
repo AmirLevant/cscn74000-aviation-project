@@ -96,11 +96,11 @@ Packet::Packet(uint8_t* buffer)
 }
 
 // Create a packet which sends the plane's basic telemetry information. Not to be used for sending the flag.
-Packet::Packet(Plane plane)
+Packet::Packet(Plane* plane)
 {
 	timestamp = get_timestamp();
 
-	senderId = plane.getId();
+	senderId = plane->getId();
 
 	destinationId = 0;
 
@@ -108,7 +108,7 @@ Packet::Packet(Plane plane)
 
 	requestType = RequestType::Non_Request;
 
-	transactionNum = plane.getAndIncreaseTransactionNum();
+	transactionNum = plane->getAndIncreaseTransactionNum();
 
 	bodyLength = PLANE_SERIALIZATION_SIZE;
 
@@ -116,7 +116,7 @@ Packet::Packet(Plane plane)
 	{
 		body = new uint8_t[bodyLength];
 		// Serializes the necessary plane telemetry into the body of the packet message
-		plane.serialize(body);
+		plane->serialize(body);
 	}
 	else
 		body = nullptr;

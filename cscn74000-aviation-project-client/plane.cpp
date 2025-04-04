@@ -84,7 +84,8 @@ Model Plane::getModel()  {
 
 uint32_t Plane::getAndIncreaseTransactionNum()
 {
-    return ++num_transactions;
+    num_transactions++;
+    return num_transactions;
 }
 
 uint32_t Plane::getCurrentTransactionNum()
