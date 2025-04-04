@@ -7,9 +7,11 @@
 void sendFlag(Plane& plane);
 void requestWeather(Plane& plane);
 int waitForResponse(Plane& plane);
+void transitionCSM(ClientStateMachine state, Plane& plane);
 
 SOCKET ClientSocket;
 sockaddr_in SvrAddr;
+ClientStateMachine CSM = ClientStateMachine::Standby;
 
 int main(int argc, char* argv[])
 {
@@ -61,6 +63,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	std::cout << "Client State Machine staring in Standby state" << std::endl;
 
 	// Plane object created with the id from the command line
 	Plane plane(planeId);
@@ -69,11 +72,14 @@ int main(int argc, char* argv[])
 	uint8_t* TxBuffer = new uint8_t[firstPkt->get_packetSize()];
 	firstPkt->Serialize(TxBuffer);
 
+	transitionCSM(ClientStateMachine::Ready, plane);
+
 	sendto(ClientSocket, (const char*)(TxBuffer), firstPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
 	firstPkt->log(true);
 	delete[] TxBuffer;
 	
 	int timeWaited;
+	transitionCSM(ClientStateMachine::Initialization, plane);
 	timeWaited = waitForResponse(plane);
 
 	int timeToSleep = 1000 - timeWaited;
@@ -102,6 +108,7 @@ int main(int argc, char* argv[])
 			requestWeather(plane);
 			requestedWeather = true;
 		}
+		std::cout << "Plane is " << plane.getDistanceFromGround() << " km away from ground station" << std::endl;
 
 		Packet* infoPkt = new Packet(&plane);
 
@@ -120,6 +127,8 @@ int main(int argc, char* argv[])
 		if (timeToSleep > 0)
 			Sleep(1000 - timeWaited);
 	}
+
+	transitionCSM(ClientStateMachine::Standby, plane);
 
 	std::cout << "Plane disconnected from ground control" << std::endl;
 	
@@ -181,42 +190,124 @@ int waitForResponse(Plane& plane)
 	uint8_t* RxBuffer = new uint8_t[MAX_PACKET_SIZE];	//	Buffer for receiving data
 
 	int length_recvfrom_parameter = sizeof(struct sockaddr_in);
-	recvfrom(ClientSocket, (char*)RxBuffer, MAX_PACKET_SIZE, 0, (SOCKADDR*)&SvrAddr, &length_recvfrom_parameter);
+	int bytesReceived = recvfrom(ClientSocket, (char*)RxBuffer, MAX_PACKET_SIZE, 0, (SOCKADDR*)&SvrAddr, &length_recvfrom_parameter);
 
-	Packet* RxPkt = new Packet((uint8_t*)RxBuffer);
-	RxPkt->log(true);
+	if (bytesReceived == SOCKET_ERROR)
+	{
+		std::cout << "Client timed out waiting for response from packet number " << plane.getCurrentTransactionNum() << std::endl;
+		transitionCSM(ClientStateMachine::Failed, plane);
+	}
+	else
+	{
+		Packet* RxPkt = new Packet((uint8_t*)RxBuffer);
+		RxPkt->log(true);
 
-	if ((RxPkt->getInteractionType() == InteractionType::Response) && (RxPkt->getTransactionNum() != plane.getCurrentTransactionNum()))
-	{
-		std::cout << "Transaction number of acknowledgement packet does not match current local transaction number. Plane will disconnect from server and divert its course outside of ground station radius." << std::endl;
-		plane.setGoNoGo(Go_NoGo::NoGo);
-	}
-	else if ((RxPkt->getInteractionType() == InteractionType::Response) && (RxPkt->getTransactionNum() == plane.getCurrentTransactionNum()))
-	{
-		std::cout << "Acknowledgement for packet number " << plane.getCurrentTransactionNum() << " received." << std::endl;
-	}
-	else if ((RxPkt->getInteractionType() == InteractionType::Request) && (RxPkt->getRequestType() == RequestType::Go_NoGo_Decision))
-	{
-		if ((Go_NoGo) * (RxPkt->getBody()) == Go_NoGo::Go)
+		if ((RxPkt->getInteractionType() == InteractionType::Response) && (RxPkt->getTransactionNum() != plane.getCurrentTransactionNum()))
 		{
-			std::cout << "Plane has been cleared to land. Proceeding to landing strip." << std::endl;
-			plane.setGoNoGo(Go_NoGo::Go);
+			std::cout << "Transaction number of acknowledgement packet does not match current local transaction number." << std::endl;
+			transitionCSM(ClientStateMachine::Failed, plane);
 		}
-		else
+		else if ((RxPkt->getInteractionType() == InteractionType::Response) && (RxPkt->getTransactionNum() == plane.getCurrentTransactionNum()))
 		{
-			std::cout << "Plane has been told not to land. Plane will disconnect from server and divert its course outside of ground station radius." << std::endl;
-			plane.setGoNoGo(Go_NoGo::NoGo);
+			std::cout << "Acknowledgement for packet number " << plane.getCurrentTransactionNum() << " received." << std::endl;
+			transitionCSM(ClientStateMachine::Connected, plane);
 		}
+		else if ((RxPkt->getInteractionType() == InteractionType::Request) && (RxPkt->getRequestType() == RequestType::Go_NoGo_Decision))
+		{
+			if ((Go_NoGo) * (RxPkt->getBody()) == Go_NoGo::Go)
+			{
+				std::cout << "Plane has been cleared to land. Proceeding to landing strip." << std::endl;
+				plane.setGoNoGo(Go_NoGo::Go);
+			}
+			else
+			{
+				std::cout << "Plane has been told not to land. Plane will divert its course outside of ground station radius." << std::endl;
+				plane.setGoNoGo(Go_NoGo::NoGo);
+			}
 
-	}
-	else if ((RxPkt->getInteractionType() == InteractionType::Request) && (RxPkt->getRequestType() == RequestType::Request_Weather))
-	{
-		std::string weather((char*)RxPkt->getBody(), RxPkt->getBodyLength());
-		std::cout << "Received weather info: " << weather << std::endl;
+		}
+		else if ((RxPkt->getInteractionType() == InteractionType::Request) && (RxPkt->getRequestType() == RequestType::Request_Weather))
+		{
+			std::string weather((char*)RxPkt->getBody(), RxPkt->getBodyLength());
+			std::cout << "Received weather info: " << weather << std::endl;
+		}
+		delete RxPkt;
 	}
 
 	delete[] RxBuffer;
-	delete RxPkt;
 
 	return static_cast<int>(duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - beginningTime).count());
+}
+
+void transitionCSM(ClientStateMachine state, Plane& plane)
+{
+	if (CSM != ClientStateMachine::Failed && state == ClientStateMachine::Failed)
+	{
+		std::cout << "Client State Machine transitioning to Failed state. Plane will divert its course outside of ground station radius." << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::NoGo);
+	}
+	else if (CSM == ClientStateMachine::Standby && state == ClientStateMachine::Ready)
+	{
+		std::cout << "Client State Machine transitioning to Ready state" << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::Go);
+	}
+	else if (CSM == ClientStateMachine::Standby && (state != ClientStateMachine::Failed && state != ClientStateMachine::Ready && state != ClientStateMachine::Standby))
+	{
+		std::cout << "Client State Machine currently in Standby state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::NoGo);
+	}
+	else if (CSM == ClientStateMachine::Ready && state == ClientStateMachine::Initialization)
+	{
+		std::cout << "Client State Machine transitioning to Initialization state" << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::Go);
+	}
+	else if (CSM == ClientStateMachine::Ready && (state != ClientStateMachine::Failed && state != ClientStateMachine::Initialization && state != ClientStateMachine::Ready))
+	{
+		std::cout << "Client State Machine currently in Ready state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::NoGo);
+	}
+	else if (CSM == ClientStateMachine::Initialization && state == ClientStateMachine::Connected)
+	{
+		std::cout << "Client State Machine transitioning to Connected state" << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::Go);
+	}
+	else if (CSM == ClientStateMachine::Initialization && (state != ClientStateMachine::Failed && state != ClientStateMachine::Connected && state != ClientStateMachine::Initialization))
+	{
+		std::cout << "Client State Machine currently in Initialization state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::NoGo);
+	}
+	else if (CSM == ClientStateMachine::Connected && state == ClientStateMachine::Standby)
+	{
+		std::cout << "Client State Machine transitioning to Standby state" << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::Go);
+	}
+	else if (CSM == ClientStateMachine::Connected && (state != ClientStateMachine::Failed && state != ClientStateMachine::Standby && state != ClientStateMachine::Connected))
+	{
+		std::cout << "Client State Machine currently in Connected state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::NoGo);
+	}
+	else if (CSM == ClientStateMachine::Failed && state == ClientStateMachine::Connected)
+	{
+		transitionCSM(ClientStateMachine::Ready, plane);
+		transitionCSM(ClientStateMachine::Initialization, plane);
+		std::cout << "Client State Machine transitioning to Connected state" << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::Go);
+	}
+	else if (CSM == ClientStateMachine::Failed && state == ClientStateMachine::Ready)
+	{
+		std::cout << "Client State Machine transitioning to Ready state" << std::endl;
+		CSM = state;
+		plane.setGoNoGo(Go_NoGo::Go);
+	}
+
 }

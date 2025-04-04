@@ -5,7 +5,7 @@ Plane::Plane(uint32_t id)
 {
     this->id = id;
     plane_carrier = static_cast<Carrier>(rand() % Carrier::Carrier_Total_Amount);
-    country = static_cast<Country>(rand() % Country::Country_Total_Amount);
+    country = static_cast<Country>((rand() % (Country::Country_Total_Amount - 1)) + 1);
     model = static_cast<Model>(rand() % Model::Model_Total_Amount);
 
     distance_groundctrl = STARTING_DISTANCE;
@@ -828,6 +828,9 @@ void Plane::findCountryName()
         break;
     case Zimbabwe:
         country_name = "Zimbabwe";
+        break;
+    case Country_Unknown:
+        country_name = "Unknown";
         break;
     default:
         country_name = "Unknown";

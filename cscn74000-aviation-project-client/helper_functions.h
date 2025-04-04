@@ -22,6 +22,7 @@ enum Go_NoGo : uint16_t { NoGo, Go};
 enum Carrier : uint8_t { WestJet, SunWing, JetBlue, Spirit, Frontier, Virgin, Vistara, Flair, Carrier_Total_Amount };
 enum Country : uint8_t 
 {
+	Country_Unknown,
 	Afghanistan, Albania, Algeria, Andorra, Angola, Antigua_and_Barbuda, Argentina, Armenia, Australia, Austria, Azerbaijan, 
 	Bahamas, Bahrain, Bangladesh, Barbados, Belarus, Belgium, Belize, Benin, Bhutan, Bolivia, Bosnia_and_Herzegovina, Botswana, Brazil, Brunei, Bulgaria, Burkina_Faso, Burundi, 
 	Cabo_Verde, Cambodia, Cameroon, Canada, Central_African_Republic, Chad, Chile, China, Colombia, Comoros, Costa_Rica, Croatia, Cuba, Cyprus, Czechia, 
@@ -47,10 +48,11 @@ enum Country : uint8_t
 	Yemen, 
 	Zambia, Zimbabwe,
 	Country_Total_Amount,
-	Country_Unknown
 };
 enum Model : uint8_t { Boeing_747, Boeing_787_Dreamliner, Boeing_737_MAX, Airbus_A380, Airbus_A320neo, Airbus_A350, Embraer_E190, Embraer_E175, Bombardier_CRJ900, Bombardier_Global_7500,
 Cessna_Citation_X, Gulfstream_G650, McDonnell_Douglas_MD_11, Concorde, Lockheed_Martin_C_130_Hercules, Model_Total_Amount};
+
+enum ClientStateMachine { Standby, Ready, Initialization, Connected, Failed };
 
 bool findMatchingFile(std::string& filePath, const std::string& directoryPath);
 Country getCountryEnumFromString(const std::string& name);
