@@ -50,10 +50,9 @@ public:
     void decreaseDistance(uint32_t decrement);
     void increaseDistance(uint32_t increment);
 
-    // Display functionality
-    void displayInfo();
-
     void serialize(uint8_t* buffer);
 
+    // Display functionality
     void log(std::map<uint32_t, Country> idCountryMap);
+    void print(std::map<uint32_t, Country> idCountryMap);
 };

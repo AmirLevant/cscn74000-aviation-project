@@ -17,7 +17,7 @@
 #define MAX_RECEIVE_SIZE 65565
 
 enum InteractionType : uint8_t { Telemetry, Request, Response };
-enum RequestType : uint8_t { Non_Request, InitiateConnection, SendingFileData, Go_NoGo_Decision };
+enum RequestType : uint8_t { Non_Request, InitiateConnection, SendingFileData, Go_NoGo_Decision, Request_Weather };
 enum Go_NoGo : uint16_t { NoGo, Go};
 enum Carrier : uint8_t { WestJet, SunWing, JetBlue, Spirit, Frontier, Virgin, Vistara, Flair, Carrier_Total_Amount };
 enum Country : uint8_t 

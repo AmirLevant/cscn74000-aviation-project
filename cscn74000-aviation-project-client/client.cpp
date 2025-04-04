@@ -5,6 +5,7 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 void sendFlag(Plane& plane);
+void requestWeather(Plane& plane);
 int waitForResponse(Plane& plane);
 
 SOCKET ClientSocket;
@@ -80,6 +81,7 @@ int main(int argc, char* argv[])
 		Sleep(1000 - timeWaited);
 
 	bool sentFlag = false;
+	bool requestedWeather = false;
 
 	while (plane.getDistanceFromGround() <= 350 && plane.getDistanceFromGround() > 0)
 	{
@@ -89,11 +91,18 @@ int main(int argc, char* argv[])
 			plane.increaseDistance(1);
 
 
-		if (plane.getDistanceFromGround() <= 349 && sentFlag == false)
+		if (plane.getDistanceFromGround() <= 300 && sentFlag == false)
 		{
 			sendFlag(plane);
 			sentFlag = true;
 		}
+
+		if (plane.getDistanceFromGround() <= 275 && requestedWeather == false)
+		{
+			requestWeather(plane);
+			requestedWeather = true;
+		}
+
 		Packet* infoPkt = new Packet(&plane);
 
 		TxBuffer = new uint8_t[infoPkt->get_packetSize()];
@@ -143,14 +152,26 @@ void sendFlag(Plane& plane)
 			delete[] TxBuffer;
 
 			int timeWaited = waitForResponse(plane);
-
-			int timeToSleep = 1000 - timeWaited;
-			if (timeToSleep > 0)
-				Sleep(1000 - timeWaited);
 		}
 	}
 
 	ReadFile.close();
+}
+
+void requestWeather(Plane& plane)
+{
+	Packet* weatherPkt = new Packet(plane.getId(), 0, RequestType::Request_Weather, plane.getAndIncreaseTransactionNum(), 0, nullptr);
+
+	uint8_t* TxBuffer = new uint8_t[weatherPkt->get_packetSize()];
+	weatherPkt->Serialize(TxBuffer);
+
+	sendto(ClientSocket, (const char*)(TxBuffer), weatherPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+	weatherPkt->log(true);
+
+	delete weatherPkt;
+	delete[] TxBuffer;
+
+	int timeWaited = waitForResponse(plane);
 }
 
 int waitForResponse(Plane& plane)
@@ -187,6 +208,11 @@ int waitForResponse(Plane& plane)
 			plane.setGoNoGo(Go_NoGo::NoGo);
 		}
 
+	}
+	else if ((RxPkt->getInteractionType() == InteractionType::Request) && (RxPkt->getRequestType() == RequestType::Request_Weather))
+	{
+		std::string weather((char*)RxPkt->getBody(), RxPkt->getBodyLength());
+		std::cout << "Received weather info: " << weather << std::endl;
 	}
 
 	delete[] RxBuffer;

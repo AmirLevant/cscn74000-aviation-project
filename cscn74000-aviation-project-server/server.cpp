@@ -10,6 +10,7 @@ void dealWithRequestPacket(Packet* RxPkt, sockaddr_in CltAddr);
 bool processFile(Packet* RxPkt);
 void initializeConnection(Packet* RxPkt);
 void sendAcknowledgement(Packet* TxPkt, sockaddr_in CltAddr);
+void sendWeather(Packet* RxPkt, sockaddr_in CltAddr);
 void sendGo_NoGo(Packet* RxPkt, sockaddr_in CltAddr, enum Go_NoGo GoNoGo);
 
 // Initialize the ground station with random weather
@@ -108,6 +109,7 @@ void dealWithRecvPacket(Packet* RxPkt, sockaddr_in CltAddr)
 	{
 		Plane RxPlane(RxPkt->getBody());
 		RxPlane.log(idCountryMap);
+		RxPlane.print(idCountryMap);
 		sendAcknowledgement(RxPkt, CltAddr);
 		break;
 	}
@@ -129,6 +131,7 @@ void dealWithRequestPacket(Packet* RxPkt, sockaddr_in CltAddr)
 		sendAcknowledgement(RxPkt, CltAddr);
 		break;
 	case RequestType::SendingFileData:
+	{
 		bool foundMatch = processFile(RxPkt);
 		if (foundMatch)
 		{
@@ -141,6 +144,10 @@ void dealWithRequestPacket(Packet* RxPkt, sockaddr_in CltAddr)
 		}
 		else
 			sendGo_NoGo(RxPkt, CltAddr, Go_NoGo::NoGo);
+		break;
+	}
+	case RequestType::Request_Weather:
+		sendWeather(RxPkt, CltAddr);
 		break;
 	}
 }
@@ -172,15 +179,29 @@ void sendAcknowledgement(Packet* TxPkt, sockaddr_in CltAddr)
 	TxPkt->log(false);
 }
 
+void sendWeather(Packet* RxPkt, sockaddr_in CltAddr)
+{
+	uint8_t* buffer = new uint8_t[groundStation.getWeather().length()];
+	memcpy(buffer, groundStation.getWeather().c_str(), groundStation.getWeather().length());
+	Packet* TxPkt = new Packet(RxPkt->getDestinationId(), RxPkt->getSenderId(), RequestType::Request_Weather, groundStation.getAndIncreaseTransactionNum(), groundStation.getWeather().length(), buffer);
+
+	uint8_t* TxBuffer = new uint8_t[TxPkt->get_packetSize()];
+	TxPkt->Serialize(TxBuffer);
+
+	sendto(ServerSocket, (const char*)(TxBuffer), TxPkt->get_packetSize(), 0, (SOCKADDR*)&CltAddr, sizeof(CltAddr)); // thats how the library defines UDP sending, we need to typecast
+	TxPkt->log(false);
+}
+
 void initializeConnection(Packet* RxPkt)
 {
-	std::string folderName = "../PlaneTelemetry/" + std::to_string(RxPkt->getSenderId());  // Convert int to string
+	std::string folderNum = std::to_string(RxPkt->getSenderId());
+	std::string folderName = "../PlaneTelemetry/" + folderNum;  // Convert int to string
 
 	if (std::filesystem::create_directory(folderName)) {
 		std::cout << "Folder created: " << folderName << std::endl;
 	}
 	else {
-		std::cout << "Failed to create folder (it may already exist)." << std::endl;
+		std::cout << "Failed to create folder for Plane with ID of " << folderNum << " (it may already exist)." << std::endl;
 	}
 }
 

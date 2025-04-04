@@ -142,16 +142,6 @@ void Plane::increaseDistance(uint32_t increment)
     distance_groundctrl = distance_groundctrl + increment;
 }
 
-void Plane::displayInfo() {
-    std::cout << "Plane Information:" << std::endl;
-    std::cout << "-------------------" << std::endl;
-    std::cout << "ID: " << id << std::endl;
-    std::cout << "Carrier: " << plane_carrier << std::endl;
-    std::cout << "Model: " << model << std::endl;
-    //std::cout << "Country: " << country << " " << country_flag << std::endl;
-    std::cout << "Distance from Ground Control: " << distance_groundctrl << " units" << std::endl;
-}
-
 void Plane::serialize(uint8_t* buffer)
 {
     int offset = 0;
@@ -194,6 +184,20 @@ void Plane::log(std::map<uint32_t, Country> idCountryMap)
     WriteFile.write(s.str().c_str(), s.str().length());
 
     WriteFile.close();
+}
+
+void Plane::print(std::map<uint32_t, Country> idCountryMap)
+{
+    country = idCountryMap[id];
+    findCountryName();
+
+    std::cout << "Plane Information:" << std::endl;
+    std::cout << "-------------------" << std::endl;
+    std::cout << "ID: " << id << std::endl;
+    std::cout << "Carrier: " << plane_carrier_name << std::endl;
+    std::cout << "Model: " << model_name << std::endl;
+    std::cout << "Country: " << country_name << std::endl;
+    std::cout << "Distance from Ground Control: " << distance_groundctrl << " km" << std::endl << std::endl;
 }
 
 void Plane::findCarrierName()
