@@ -6,21 +6,47 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 void dealWithRecvPacket(Packet* RxPkt, sockaddr_in CltAddr);
-void dealWithRequestPacket(Packet* RxPkt);
-void processFile(Packet* RxPkt);
+void dealWithRequestPacket(Packet* RxPkt, sockaddr_in CltAddr);
+bool processFile(Packet* RxPkt);
 void initializeConnection(Packet* RxPkt);
 void sendAcknowledgement(Packet* TxPkt, sockaddr_in CltAddr);
+void sendGo_NoGo(Packet* RxPkt, sockaddr_in CltAddr, enum Go_NoGo GoNoGo);
 
+// Initialize the ground station with random weather
+Ground_Station groundStation;
 SOCKET ServerSocket;
 sockaddr_in SvrAddr;
+std::map<uint32_t, Country> idCountryMap;
+
+extern std::vector<enum Country> allowedCountries = {
+	Afghanistan, Algeria, Angola, Argentina, Australia, Azerbaijan,
+	Bahrain, Barbados, Belgium, Benin, Bolivia, Botswana, Brunei, Burkina_Faso,
+	Cabo_Verde, Cameroon, Central_African_Republic, Chile, Colombia, Costa_Rica, Cuba, Czechia,
+	Denmark, Dominica,
+	Ecuador, El_Salvador, Eritrea, Eswatini,
+	Fiji, France,
+	Gambia, Germany, Greece, Guatemala, Guinea_Bissau,
+	Haiti, Hungary,
+	India, Iran, Ireland, Israel, Ivory_Coast,
+	Japan,
+	Kazakhstan, Kiribati, Kuwait,
+	Laos, Lebanon, Liberia, Liechtenstein, Luxembourg,
+	Malawi, Maldives, Malta, Mauritania, Mauritius, Micronesia, Monaco, Montenegro, Mozambique, Myanmar,
+	Nauru, Netherlands, Nicaragua, Nigeria, North_Macedonia,
+	Oman,
+	Palau, Panama, Paraguay, Philippines, Portugal,
+	Republic_of_the_Congo, Russia,
+	Saint_Lucia, Samoa, Sao_Tome_and_Principe, Senegal, Seychelles, Singapore, Slovenia, Somalia, South_Korea, Spain, Sudan, Sweden, Syria,
+	Tajikistan, Thailand, Togo, Trinidad_and_Tobago, Turkey, Tuvalu,
+	Ukraine, United_Arab_Emirates, United_States_of_America, Uzbekistan,
+	Vatican_City, Vietnam,
+	Zambia
+};
 
 void main()
 {
 	// Seed the random number generator
 	std::srand(std::time(0));
-
-	// Initialize the ground station with random weather
-	Ground_Station groundStation;
 
 	// Display the ground station information (including weather)
 	std::cout << "Server starting with initial conditions:" << std::endl;
@@ -62,10 +88,10 @@ void main()
 		recvfrom(ServerSocket, (char*)RxBuffer, MAX_PACKET_SIZE, 0, (SOCKADDR*)&CltAddr, &length_recvfrom_parameter);
 
 		Packet* RxPkt = new Packet((uint8_t*)RxBuffer);
+		RxPkt->log(false);
 
 		dealWithRecvPacket(RxPkt, CltAddr);
 
-		//Plane RxPlane(RxPkt->getBody());
 		delete[] RxBuffer;
 		delete RxPkt;
 	}
@@ -79,28 +105,60 @@ void dealWithRecvPacket(Packet* RxPkt, sockaddr_in CltAddr)
 	switch (RxPkt->getInteractionType())
 	{
 	case InteractionType::Telemetry:
+	{
+		Plane RxPlane(RxPkt->getBody());
+		RxPlane.log(idCountryMap);
 		sendAcknowledgement(RxPkt, CltAddr);
 		break;
+	}
 	case InteractionType::Request:
-		dealWithRequestPacket(RxPkt);
-		sendAcknowledgement(RxPkt, CltAddr);
+		dealWithRequestPacket(RxPkt, CltAddr);
 		break;
 	case InteractionType::Response:
 		break;
 	}
+
 }
 
-void dealWithRequestPacket(Packet* RxPkt)
+void dealWithRequestPacket(Packet* RxPkt, sockaddr_in CltAddr)
 {
 	switch (RxPkt->getRequestType())
 	{
 	case RequestType::InitiateConnection:
 		initializeConnection(RxPkt);
+		sendAcknowledgement(RxPkt, CltAddr);
 		break;
 	case RequestType::SendingFileData:
-		processFile(RxPkt);
+		bool foundMatch = processFile(RxPkt);
+		if (foundMatch)
+		{
+			if (std::find(allowedCountries.begin(), allowedCountries.end(), idCountryMap[RxPkt->getSenderId()]) != allowedCountries.end())
+				// Country was found and is not banned
+				sendGo_NoGo(RxPkt, CltAddr, Go_NoGo::Go);
+			else
+				// Country not found or is banned
+				sendGo_NoGo(RxPkt, CltAddr, Go_NoGo::NoGo);
+		}
+		else
+			sendGo_NoGo(RxPkt, CltAddr, Go_NoGo::NoGo);
 		break;
 	}
+}
+
+void sendGo_NoGo(Packet* RxPkt, sockaddr_in CltAddr, enum Go_NoGo GoNoGo)
+{
+	uint8_t* buffer = new uint8_t[sizeof(Go_NoGo)];
+	memcpy(buffer, &GoNoGo, sizeof(GoNoGo));
+	Packet* TxPkt = new Packet(RxPkt->getDestinationId(), RxPkt->getSenderId(), RequestType::Go_NoGo_Decision, groundStation.getAndIncreaseTransactionNum(), sizeof(GoNoGo), buffer);
+
+	uint8_t* TxBuffer = new uint8_t[TxPkt->get_packetSize()];
+	TxPkt->Serialize(TxBuffer);
+
+	sendto(ServerSocket, (const char*)(TxBuffer), TxPkt->get_packetSize(), 0, (SOCKADDR*)&CltAddr, sizeof(CltAddr)); // thats how the library defines UDP sending, we need to typecast
+	TxPkt->log(false);
+
+	delete[] TxBuffer;
+	delete TxPkt;
 }
 
 void sendAcknowledgement(Packet* TxPkt, sockaddr_in CltAddr)
@@ -111,6 +169,7 @@ void sendAcknowledgement(Packet* TxPkt, sockaddr_in CltAddr)
 	TxPkt->Serialize(TxBuffer);
 
 	sendto(ServerSocket, (const char*)(TxBuffer), TxPkt->get_packetSize(), 0, (SOCKADDR*)&CltAddr, sizeof(CltAddr)); // thats how the library defines UDP sending, we need to typecast
+	TxPkt->log(false);
 }
 
 void initializeConnection(Packet* RxPkt)
@@ -125,7 +184,31 @@ void initializeConnection(Packet* RxPkt)
 	}
 }
 
-void processFile(Packet* RxPkt)
+bool processFile(Packet* RxPkt)
 {
+	std::string fileName = "../PlaneTelemetry/" + std::to_string(RxPkt->getSenderId()) + "/flag.png";
 
+	std::ofstream WriteFile(fileName, std::ofstream::binary | std::ios::app);
+
+	WriteFile.write((const char*)RxPkt->getBody(), RxPkt->getBodyLength());
+
+	WriteFile.close();
+
+	if (RxPkt->getBodyLength() < MAX_READ_SIZE)
+	{
+		if (findMatchingFile(fileName, "../flags/"))
+		{
+			std::cout << "Found match of received flag with flag of " << fileName << " for plane with ID of " << RxPkt->getSenderId() << std::endl;
+
+			Country country = getCountryEnumFromString(fileName);
+			idCountryMap[RxPkt->getSenderId()] = country;
+			return true;
+		}
+		else
+		{
+			std::cout << "Did not find match of flag for plane with ID of " << RxPkt->getSenderId() << ". Informing plane they cannot land." << std::endl;
+			idCountryMap[RxPkt->getSenderId(), Country::Country_Unknown];
+			return false;
+		}
+	}
 }

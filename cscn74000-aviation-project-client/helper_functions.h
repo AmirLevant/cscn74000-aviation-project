@@ -10,11 +10,15 @@
 #include <filesystem>
 #include <fstream>
 #include <cstring>
+#include <map>
+#include <vector>
+#include <sstream>
 
 #define MAX_RECEIVE_SIZE 65565
 
 enum InteractionType : uint8_t { Telemetry, Request, Response };
-enum RequestType : uint8_t { Non_Request, InitiateConnection, SendingFileData };
+enum RequestType : uint8_t { Non_Request, InitiateConnection, SendingFileData, Go_NoGo_Decision };
+enum Go_NoGo : uint16_t { NoGo, Go};
 enum Carrier : uint8_t { WestJet, SunWing, JetBlue, Spirit, Frontier, Virgin, Vistara, Flair, Carrier_Total_Amount };
 enum Country : uint8_t 
 {
@@ -48,4 +52,7 @@ enum Country : uint8_t
 enum Model : uint8_t { Boeing_747, Boeing_787_Dreamliner, Boeing_737_MAX, Airbus_A380, Airbus_A320neo, Airbus_A350, Embraer_E190, Embraer_E175, Bombardier_CRJ900, Bombardier_Global_7500,
 Cessna_Citation_X, Gulfstream_G650, McDonnell_Douglas_MD_11, Concorde, Lockheed_Martin_C_130_Hercules, Model_Total_Amount};
 
-std::string findMatchingFile(const std::string& filePath, const std::string& directoryPath);
+bool findMatchingFile(std::string& filePath, const std::string& directoryPath);
+Country getCountryEnumFromString(const std::string& name);
+
+

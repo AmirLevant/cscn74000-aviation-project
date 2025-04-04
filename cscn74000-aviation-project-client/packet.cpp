@@ -264,7 +264,32 @@ uint32_t Packet::getTransactionNum()
 	return transactionNum;
 }
 
+uint16_t Packet::getBodyLength()
+{
+	return bodyLength;
+}
+
+uint32_t Packet::getDestinationId()
+{
+	return destinationId;
+}
+
 uint8_t* Packet::getBody()
 {
 	return body;
+}
+
+void Packet::log(bool isClient)
+{
+	std::ofstream WriteFile;
+	if (isClient)
+		WriteFile.open("../Packets/ClientPackets.csv", std::ios::app);
+	else
+		WriteFile.open("../Packets/ServerPackets.csv", std::ios::app);
+
+	std::stringstream ss;
+	ss << "\n" << timestamp << "," << senderId << "," << destinationId << "," << (int)interactionType << "," << (int)requestType << "," << transactionNum << "," << bodyLength << "," << checksum;
+	WriteFile.write(ss.str().c_str(), ss.str().length());
+
+	WriteFile.close();
 }

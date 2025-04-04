@@ -18,8 +18,6 @@ class Packet
 	uint16_t checksum;
 	uint8_t* body;
 
-	uint16_t packetSize;
-
 public:
 	Packet(uint32_t sendId, uint32_t destId, uint32_t transNum, uint16_t length, uint8_t* data);
 	Packet(uint32_t sendId, uint32_t destId, RequestType reqType, uint32_t transNum, uint16_t bodyLen, uint8_t* data);
@@ -35,5 +33,9 @@ public:
 	RequestType getRequestType();
 	uint32_t getSenderId();
 	uint32_t getTransactionNum();
+	uint16_t getBodyLength();
+	uint32_t getDestinationId();
 	uint8_t* getBody();
+	void log(bool isClient);
+
 };

@@ -4,8 +4,8 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-void sendFlag(Plane plane);
-int waitForResponse(uint32_t transNum);
+void sendFlag(Plane& plane);
+int waitForResponse(Plane& plane);
 
 SOCKET ClientSocket;
 sockaddr_in SvrAddr;
@@ -69,10 +69,11 @@ int main(int argc, char* argv[])
 	firstPkt->Serialize(TxBuffer);
 
 	sendto(ClientSocket, (const char*)(TxBuffer), firstPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+	firstPkt->log(true);
 	delete[] TxBuffer;
 	
 	int timeWaited;
-	timeWaited = waitForResponse(plane.getCurrentTransactionNum());
+	timeWaited = waitForResponse(plane);
 
 	int timeToSleep = 1000 - timeWaited;
 	if (timeToSleep > 0)
@@ -80,11 +81,15 @@ int main(int argc, char* argv[])
 
 	bool sentFlag = false;
 
-	while (true)
+	while (plane.getDistanceFromGround() <= 350 && plane.getDistanceFromGround() > 0)
 	{
-		plane.decreaseDistance(1);
+		if (plane.getGoNoGo() == Go_NoGo::Go)
+			plane.decreaseDistance(1);
+		else
+			plane.increaseDistance(1);
 
-		if (plane.getDistanceFromGround() <= 300 && sentFlag == false)
+
+		if (plane.getDistanceFromGround() <= 349 && sentFlag == false)
 		{
 			sendFlag(plane);
 			sentFlag = true;
@@ -95,17 +100,20 @@ int main(int argc, char* argv[])
 		infoPkt->Serialize(TxBuffer);
 
 		sendto(ClientSocket, (const char*)(TxBuffer), infoPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+		infoPkt->log(true);
+
 		delete[] TxBuffer;
 		delete infoPkt;
 
-		timeWaited = waitForResponse(plane.getCurrentTransactionNum());
+		timeWaited = waitForResponse(plane);
 
 		timeToSleep = 1000 - timeWaited;
 		if (timeToSleep > 0)
 			Sleep(1000 - timeWaited);
 	}
+
+	std::cout << "Plane disconnected from ground control" << std::endl;
 	
-	delete[] TxBuffer;
 	delete firstPkt;
 
 	closesocket(ClientSocket);
@@ -114,7 +122,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void sendFlag(Plane plane)
+void sendFlag(Plane& plane)
 {
 	std::ifstream ReadFile(plane.getFlagPath(), std::ifstream::binary);
 
@@ -129,14 +137,23 @@ void sendFlag(Plane plane)
 			filePkt->Serialize(TxBuffer);
 
 			sendto(ClientSocket, (const char*)(TxBuffer), filePkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+			filePkt->log(true);
 
 			delete filePkt;
 			delete[] TxBuffer;
+
+			int timeWaited = waitForResponse(plane);
+
+			int timeToSleep = 1000 - timeWaited;
+			if (timeToSleep > 0)
+				Sleep(1000 - timeWaited);
 		}
 	}
+
+	ReadFile.close();
 }
 
-int waitForResponse(uint32_t transNum)
+int waitForResponse(Plane& plane)
 {
 	auto beginningTime = std::chrono::high_resolution_clock::now();
 
@@ -146,14 +163,30 @@ int waitForResponse(uint32_t transNum)
 	recvfrom(ClientSocket, (char*)RxBuffer, MAX_PACKET_SIZE, 0, (SOCKADDR*)&SvrAddr, &length_recvfrom_parameter);
 
 	Packet* RxPkt = new Packet((uint8_t*)RxBuffer);
+	RxPkt->log(true);
 
-	if (RxPkt->getInteractionType() == InteractionType::Response && (RxPkt->getTransactionNum() != transNum))
+	if ((RxPkt->getInteractionType() == InteractionType::Response) && (RxPkt->getTransactionNum() != plane.getCurrentTransactionNum()))
 	{
 		std::cout << "Transaction number of acknowledgement packet does not match current local transaction number. Plane will disconnect from server and divert its course outside of ground station radius." << std::endl;
+		plane.setGoNoGo(Go_NoGo::NoGo);
 	}
-	else if (RxPkt->getInteractionType() == InteractionType::Response && (RxPkt->getTransactionNum() == transNum))
+	else if ((RxPkt->getInteractionType() == InteractionType::Response) && (RxPkt->getTransactionNum() == plane.getCurrentTransactionNum()))
 	{
-		std::cout << "Acknowledgement for packet number " << transNum << " received." << std::endl;
+		std::cout << "Acknowledgement for packet number " << plane.getCurrentTransactionNum() << " received." << std::endl;
+	}
+	else if ((RxPkt->getInteractionType() == InteractionType::Request) && (RxPkt->getRequestType() == RequestType::Go_NoGo_Decision))
+	{
+		if ((Go_NoGo) * (RxPkt->getBody()) == Go_NoGo::Go)
+		{
+			std::cout << "Plane has been cleared to land. Proceeding to landing strip." << std::endl;
+			plane.setGoNoGo(Go_NoGo::Go);
+		}
+		else
+		{
+			std::cout << "Plane has been told not to land. Plane will disconnect from server and divert its course outside of ground station radius." << std::endl;
+			plane.setGoNoGo(Go_NoGo::NoGo);
+		}
+
 	}
 
 	delete[] RxBuffer;

@@ -12,6 +12,7 @@ class Plane
     Country country;         // the plane's country of origin
     Model model;
     uint32_t num_transactions;
+    Go_NoGo goNoGo;
     std::string country_flag_path;
 
     std::string plane_carrier_name;
@@ -32,6 +33,7 @@ public:
     Model getModel();
     uint32_t getAndIncreaseTransactionNum();
     uint32_t getCurrentTransactionNum();
+    Go_NoGo getGoNoGo();
     std::string getFlagPath();
 
 
@@ -42,11 +44,16 @@ public:
     // Setters
     void setCarrier(Carrier carrier);
     void setDistanceFromGroundControl(uint32_t distance);
+    void setGoNoGo(Go_NoGo goNoGo);
+    void setCountry(Country country);
 
     void decreaseDistance(uint32_t decrement);
+    void increaseDistance(uint32_t increment);
 
     // Display functionality
     void displayInfo();
 
     void serialize(uint8_t* buffer);
+
+    void log(std::map<uint32_t, Country> idCountryMap);
 };

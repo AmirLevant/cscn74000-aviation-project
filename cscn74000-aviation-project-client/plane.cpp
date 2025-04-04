@@ -14,9 +14,10 @@ Plane::Plane(uint32_t id)
     findCountryName();
     findModelName();
 
-    country_flag_path = "../flags/" + plane_carrier_name + "flag.png";
+    country_flag_path = "../flags/" + country_name + "_flag.png";
 
     num_transactions = 0;
+    goNoGo = Go_NoGo::Go;
 }
 
 // Constructor implementation
@@ -34,6 +35,7 @@ Plane::Plane(uint32_t id, Carrier carrier, Country country, Model model) {
     country_flag_path = "../flags/" + plane_carrier_name + "flag.png";
 
     num_transactions = 0;
+    goNoGo = Go_NoGo::Go;
 }
 
 Plane::Plane(uint8_t* buffer)
@@ -53,6 +55,7 @@ Plane::Plane(uint8_t* buffer)
     offset += sizeof(distance_groundctrl);
 
     country = Country_Unknown;
+    goNoGo = Go_NoGo::Go;
 
     findCarrierName();
     findCountryName();
@@ -93,6 +96,11 @@ uint32_t Plane::getCurrentTransactionNum()
     return num_transactions;
 }
 
+Go_NoGo Plane::getGoNoGo()
+{
+    return goNoGo;
+}
+
 std::string Plane::getFlagPath()
 {
     return country_flag_path;
@@ -109,6 +117,17 @@ void Plane::setDistanceFromGroundControl(uint32_t distance)
     distance_groundctrl = distance;
 }
 
+void Plane::setGoNoGo(Go_NoGo goNoGo)
+{
+    this->goNoGo = goNoGo;
+}
+
+void Plane::setCountry(Country country)
+{
+    this->country = country;
+    findCountryName();
+}
+
 void Plane::decreaseDistance(uint32_t decrement)
 {
     distance_groundctrl = distance_groundctrl - decrement;
@@ -116,6 +135,11 @@ void Plane::decreaseDistance(uint32_t decrement)
     {
         distance_groundctrl = 0;
     }
+}
+
+void Plane::increaseDistance(uint32_t increment)
+{
+    distance_groundctrl = distance_groundctrl + increment;
 }
 
 void Plane::displayInfo() {
@@ -143,6 +167,33 @@ void Plane::serialize(uint8_t* buffer)
 
     memcpy(buffer + offset, &distance_groundctrl, sizeof(distance_groundctrl));
     offset += sizeof(distance_groundctrl);
+}
+
+void Plane::log(std::map<uint32_t, Country> idCountryMap)
+{
+    std::string fileName = "../PlaneTelemetry/" + std::to_string(id) + "/Telemetry.csv";  // Convert int to string
+
+    std::ofstream WriteFile;
+
+    if (std::filesystem::exists(fileName) != true)
+    {
+        std::stringstream ss;
+        WriteFile.open(fileName, std::ios::app);
+        ss << "PlaneId,PlaneCarrier,PlaneModel,PlaneCountry,DistanceFromGround";
+        WriteFile.write(ss.str().c_str(), ss.str().length());
+    }
+    else
+        WriteFile.open(fileName, std::ios::app);
+
+    std::stringstream s;
+
+    country = idCountryMap[id];
+    findCountryName();
+
+    s << "\n" << id << "," << plane_carrier_name << "," << model_name << "," << country_name << "," << distance_groundctrl;
+    WriteFile.write(s.str().c_str(), s.str().length());
+
+    WriteFile.close();
 }
 
 void Plane::findCarrierName()

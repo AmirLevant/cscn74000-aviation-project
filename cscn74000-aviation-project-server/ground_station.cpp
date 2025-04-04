@@ -19,11 +19,13 @@ const std::vector<std::string> Ground_Station::weatherTypes = {
 Ground_Station::Ground_Station() {
     // Generate random weather on initialization
     this->weather = generateRandomWeather();
+    num_transactions = 0;
 }
 
 // Overloaded constructor with specified weather
 Ground_Station::Ground_Station(std::string weather) {
     this->weather = weather;
+    num_transactions = 0;
 }
 
 // Random weather generator implementation
@@ -38,6 +40,17 @@ std::string Ground_Station::generateRandomWeather() {
 // Getter implementations
 std::string Ground_Station::getWeather() {
     return weather;
+}
+
+uint32_t Ground_Station::getAndIncreaseTransactionNum()
+{
+    num_transactions++;
+    return num_transactions;
+}
+
+uint32_t Ground_Station::getCurrentTransactionNum()
+{
+    return num_transactions;
 }
 
 // Setter implementations
