@@ -35,6 +35,7 @@ public:
     uint32_t getCurrentTransactionNum();
     Go_NoGo getGoNoGo();
     std::string getFlagPath();
+    std::string getCountryName();
 
 
     void findCarrierName();

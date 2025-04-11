@@ -1,16 +1,9 @@
-#include <fstream>
-#include "packet.h"
-#include "plane.h"
+#include "client.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
-void sendFlag(Plane& plane);
-void requestWeather(Plane& plane);
-int waitForResponse(Plane& plane);
-void transitionCSM(ClientStateMachine state, Plane& plane);
-
 SOCKET ClientSocket;
-sockaddr_in SvrAddr;
+sockaddr_in svrAddr;
 ClientStateMachine CSM = ClientStateMachine::Standby;
 
 int main(int argc, char* argv[])
@@ -50,9 +43,9 @@ int main(int argc, char* argv[])
 	}
 
 	//Connect socket to specified server
-	SvrAddr.sin_family = AF_INET;						//Address family type itnernet
-	SvrAddr.sin_port = htons(27000);					//port (host to network conversion)
-	SvrAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//IP address
+	svrAddr.sin_family = AF_INET;						//Address family type itnernet
+	svrAddr.sin_port = htons(27000);					//port (host to network conversion)
+	svrAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//IP address
 
 	// Set a 100ms timeout for receiving data
 	DWORD timeout = 100;  // Timeout in milliseconds
@@ -74,7 +67,7 @@ int main(int argc, char* argv[])
 
 	transitionCSM(ClientStateMachine::Ready, plane);
 
-	sendto(ClientSocket, (const char*)(TxBuffer), firstPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+	sendto(ClientSocket, (const char*)(TxBuffer), firstPkt->get_packetSize(), 0, (SOCKADDR*)&svrAddr, sizeof(svrAddr)); // thats how the library defines UDP sending, we need to typecast
 	firstPkt->log(true);
 	delete[] TxBuffer;
 	
@@ -115,7 +108,7 @@ int main(int argc, char* argv[])
 		TxBuffer = new uint8_t[infoPkt->get_packetSize()];
 		infoPkt->Serialize(TxBuffer);
 
-		sendto(ClientSocket, (const char*)(TxBuffer), infoPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+		sendto(ClientSocket, (const char*)(TxBuffer), infoPkt->get_packetSize(), 0, (SOCKADDR*)&svrAddr, sizeof(svrAddr)); // thats how the library defines UDP sending, we need to typecast
 		infoPkt->log(true);
 
 		delete[] TxBuffer;
@@ -154,7 +147,7 @@ void sendFlag(Plane& plane)
 			uint8_t* TxBuffer = new uint8_t[filePkt->get_packetSize()];
 			filePkt->Serialize(TxBuffer);
 
-			sendto(ClientSocket, (const char*)(TxBuffer), filePkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+			sendto(ClientSocket, (const char*)(TxBuffer), filePkt->get_packetSize(), 0, (SOCKADDR*)&svrAddr, sizeof(svrAddr)); // thats how the library defines UDP sending, we need to typecast
 			filePkt->log(true);
 
 			delete filePkt;
@@ -174,7 +167,7 @@ void requestWeather(Plane& plane)
 	uint8_t* TxBuffer = new uint8_t[weatherPkt->get_packetSize()];
 	weatherPkt->Serialize(TxBuffer);
 
-	sendto(ClientSocket, (const char*)(TxBuffer), weatherPkt->get_packetSize(), 0, (SOCKADDR*)&SvrAddr, sizeof(SvrAddr)); // thats how the library defines UDP sending, we need to typecast
+	sendto(ClientSocket, (const char*)(TxBuffer), weatherPkt->get_packetSize(), 0, (SOCKADDR*)&svrAddr, sizeof(svrAddr)); // thats how the library defines UDP sending, we need to typecast
 	weatherPkt->log(true);
 
 	delete weatherPkt;
@@ -190,7 +183,7 @@ int waitForResponse(Plane& plane)
 	uint8_t* RxBuffer = new uint8_t[MAX_PACKET_SIZE];	//	Buffer for receiving data
 
 	int length_recvfrom_parameter = sizeof(struct sockaddr_in);
-	int bytesReceived = recvfrom(ClientSocket, (char*)RxBuffer, MAX_PACKET_SIZE, 0, (SOCKADDR*)&SvrAddr, &length_recvfrom_parameter);
+	int bytesReceived = recvfrom(ClientSocket, (char*)RxBuffer, MAX_PACKET_SIZE, 0, (SOCKADDR*)&svrAddr, &length_recvfrom_parameter);
 
 	if (bytesReceived == SOCKET_ERROR)
 	{
@@ -256,7 +249,7 @@ void transitionCSM(ClientStateMachine state, Plane& plane)
 	else if (CSM == ClientStateMachine::Standby && (state != ClientStateMachine::Failed && state != ClientStateMachine::Ready && state != ClientStateMachine::Standby))
 	{
 		std::cout << "Client State Machine currently in Standby state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
-		CSM = state;
+		CSM = ClientStateMachine::Failed;
 		plane.setGoNoGo(Go_NoGo::NoGo);
 	}
 	else if (CSM == ClientStateMachine::Ready && state == ClientStateMachine::Initialization)
@@ -268,7 +261,7 @@ void transitionCSM(ClientStateMachine state, Plane& plane)
 	else if (CSM == ClientStateMachine::Ready && (state != ClientStateMachine::Failed && state != ClientStateMachine::Initialization && state != ClientStateMachine::Ready))
 	{
 		std::cout << "Client State Machine currently in Ready state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
-		CSM = state;
+		CSM = ClientStateMachine::Failed;
 		plane.setGoNoGo(Go_NoGo::NoGo);
 	}
 	else if (CSM == ClientStateMachine::Initialization && state == ClientStateMachine::Connected)
@@ -280,7 +273,7 @@ void transitionCSM(ClientStateMachine state, Plane& plane)
 	else if (CSM == ClientStateMachine::Initialization && (state != ClientStateMachine::Failed && state != ClientStateMachine::Connected && state != ClientStateMachine::Initialization))
 	{
 		std::cout << "Client State Machine currently in Initialization state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
-		CSM = state;
+		CSM = ClientStateMachine::Failed;
 		plane.setGoNoGo(Go_NoGo::NoGo);
 	}
 	else if (CSM == ClientStateMachine::Connected && state == ClientStateMachine::Standby)
@@ -292,7 +285,7 @@ void transitionCSM(ClientStateMachine state, Plane& plane)
 	else if (CSM == ClientStateMachine::Connected && (state != ClientStateMachine::Failed && state != ClientStateMachine::Standby && state != ClientStateMachine::Connected))
 	{
 		std::cout << "Client State Machine currently in Connected state and is unable to transition to requested state, now transitioning to failed state. Plane will divert its course outside of ground station radius." << std::endl;
-		CSM = state;
+		CSM = ClientStateMachine::Failed;
 		plane.setGoNoGo(Go_NoGo::NoGo);
 	}
 	else if (CSM == ClientStateMachine::Failed && state == ClientStateMachine::Connected)

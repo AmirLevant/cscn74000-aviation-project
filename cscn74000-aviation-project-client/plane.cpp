@@ -32,7 +32,7 @@ Plane::Plane(uint32_t id, Carrier carrier, Country country, Model model) {
     findCountryName();
     findModelName();
 
-    country_flag_path = "../flags/" + plane_carrier_name + "flag.png";
+    country_flag_path = "../flags/" + country_name + "_flag.png";
 
     num_transactions = 0;
     goNoGo = Go_NoGo::Go;
@@ -106,6 +106,11 @@ std::string Plane::getFlagPath()
     return country_flag_path;
 }
 
+std::string Plane::getCountryName()
+{
+    return country_name;
+}
+
 // Setter implementations
 
 void Plane::setCarrier(Carrier carrier) {
@@ -131,7 +136,7 @@ void Plane::setCountry(Country country)
 void Plane::decreaseDistance(uint32_t decrement)
 {
     distance_groundctrl = distance_groundctrl - decrement;
-    if (distance_groundctrl < 0)
+    if ((int)distance_groundctrl < 0)
     {
         distance_groundctrl = 0;
     }

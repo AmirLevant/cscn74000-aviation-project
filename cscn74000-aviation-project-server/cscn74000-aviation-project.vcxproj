@@ -141,6 +141,7 @@
     <ClInclude Include="..\cscn74000-aviation-project-client\packet.h" />
     <ClInclude Include="..\cscn74000-aviation-project-client\plane.h" />
     <ClInclude Include="ground_station.h" />
+    <ClInclude Include="server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

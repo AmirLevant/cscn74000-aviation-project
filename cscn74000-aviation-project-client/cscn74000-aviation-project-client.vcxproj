@@ -133,6 +133,7 @@
     <ClCompile Include="plane.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="client.h" />
     <ClInclude Include="helper_functions.h" />
     <ClInclude Include="packet.h" />
     <ClInclude Include="plane.h" />
